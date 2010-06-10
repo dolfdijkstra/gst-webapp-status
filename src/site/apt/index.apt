@@ -59,6 +59,8 @@ Deployment
 
   To deploy the tool on top of ContentServer you need to add spring-webmvc-2.5.5.jar and spring-context-2.5.5 to WEB-INF/lib.
   
+  You also need to deploy the jar from this project. This jar can be downloaded from {{{http://www.nl.fatwire.com/maven2/com/fatwire/gst/gst-webapp-status}here}}.
+  
   Next you need to make some changes to web.xml. 
   
 ----------
