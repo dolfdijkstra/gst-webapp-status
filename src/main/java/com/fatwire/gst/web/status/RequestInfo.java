@@ -2,10 +2,21 @@ package com.fatwire.gst.web.status;
 
 import java.lang.Thread.State;
 import java.lang.ref.WeakReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.servlet.http.HttpServletRequest;
 
+/**
+ * 
+ * Object that holds state on the current executed request. 
+ * 
+ * This object is thread safe, under the restriction that all WRITES are done from the same thread.
+ * 
+ * 
+ * @author Dolf.Dijkstra
+ * 
+ */
 public class RequestInfo {
 
     private final String threadName;
@@ -18,13 +29,15 @@ public class RequestInfo {
 
     private volatile long lastStartTime;
 
+    private volatile long lastEndTime;
+
     private volatile long lastNanoStartTime;
 
-    private volatile long lastNanoEndTime;
+    //private volatile long lastNanoEndTime;
 
     private volatile long lastExecutionTime;
 
-    private volatile boolean running = false;
+    private final AtomicBoolean running = new AtomicBoolean(false);
 
     private volatile String method;
 
@@ -39,6 +52,12 @@ public class RequestInfo {
         this.thread = new WeakReference<Thread>(t);
     }
 
+    /**
+     * 
+     * 
+     * @return true is the thread is still alive
+     * @see Thread#isAlive()
+     */
     public boolean isAlive() {
         Thread t = thread.get();
         return t != null && t.isAlive();
@@ -57,7 +76,7 @@ public class RequestInfo {
     }
 
     protected void start(HttpServletRequest request) {
-        if (running)
+        if (running.get())
             return;
         counter.incrementAndGet();
         this.lastStartTime = System.currentTimeMillis();
@@ -66,15 +85,15 @@ public class RequestInfo {
         this.remoteHost = request.getRemoteHost() + ":"
                 + request.getRemotePort();
         this.method = request.getMethod();
-        running = true;
+        running.set(true);
     }
 
     protected void end(HttpServletRequest request) {
-        if (!running)
+        if (!running.get())
             return;
-        this.lastNanoEndTime = System.nanoTime();
-        this.lastExecutionTime = lastNanoEndTime - lastNanoStartTime;
-        running = false;
+        this.lastExecutionTime = System.nanoTime() - lastNanoStartTime;
+        running.set(false);
+        this.lastEndTime =System.currentTimeMillis();
     }
 
     /**
@@ -83,15 +102,16 @@ public class RequestInfo {
      */
 
     public long getExecutionTimeForLastRequest() {
-        if (running) return (System.nanoTime() - lastNanoStartTime);
+        if (running.get())
+            return (System.nanoTime() - lastNanoStartTime);
         return lastExecutionTime;
     }
 
     /**
      * @return the counter
      */
-    public AtomicLong getCounter() {
-        return counter;
+    public long getCounter() {
+        return counter.get();
     }
 
     /**
@@ -102,14 +122,14 @@ public class RequestInfo {
     }
 
     /**
-     * @return the lastEndTime
+     * @return the lastEndTime in epoch
      */
     public long getLastEndTime() {
-        return lastStartTime + (lastNanoEndTime / 1000000L);
+        return lastEndTime;
     }
 
     /**
-     * @return the lastStartTime
+     * @return the lastStartTime in epoch
      */
     public long getLastStartTime() {
         return lastStartTime;
@@ -126,7 +146,7 @@ public class RequestInfo {
      * @return the running
      */
     public boolean isRunning() {
-        return running;
+        return running.get();
     }
 
     public void reset() {
@@ -136,9 +156,9 @@ public class RequestInfo {
 
         lastStartTime = 0L;
         lastNanoStartTime = 0L;
-        lastNanoEndTime = 0L;
+        lastEndTime = 0L;
         lastExecutionTime = 0L;
-        running = false;
+        running.set(false);
 
     }
 
@@ -156,6 +176,11 @@ public class RequestInfo {
         return remoteHost;
     }
 
+    /**
+     * 
+     * 
+     * @return the State of the thread related to this object
+     */
     public State getThreadState() {
         final Thread x = thread.get();
         if (x != null) {

@@ -1,6 +1,7 @@
 package com.fatwire.gst.web.status.mvc;
 
 import java.io.PrintWriter;
+import java.lang.Thread.State;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryPoolMXBean;
@@ -163,13 +164,13 @@ public class StatusController implements Controller, ServletContextAware {
                     + getServletContext().getServerInfo() + " at "
                     + request.getLocalName() + "</title>");
             writer.println("<style type=\"text/css\">");
-            writer.println("<!--");
+            //writer.println("<!--");
             writer
                     .println("td,th,body { font-size: small; font-family: monospace; }");
             writer.println("tr.requestinfo {white-space: nowrap}");
             //writer.println("tr.running {color: black}");
             writer.println("tr.notrunning {color: #CCCCCC}");
-            writer.println("-->");
+            //writer.println("-->");
             writer.println("</style>");
             writer.println("</head><body>");
             writer.print("<h1>Status for "
@@ -206,7 +207,9 @@ public class StatusController implements Controller, ServletContextAware {
                 writer.print("State");
                 writer.print("</th></tr>");
                 for (final RequestInfo info : c) {
-                    writer.print(format(info));
+                    if (info.isAlive()) {
+                        writer.print(format(info));
+                    }
 
                 }
                 writer.print("</table>");
@@ -218,13 +221,14 @@ public class StatusController implements Controller, ServletContextAware {
                 writer
                         .print("<tr><td>R<td><td>is currently running?</td></tr>");
                 writer
-                        .print("<tr><td>time<td><td>execution time of last request in nana seconds</td></tr>");
+                        .print("<tr><td>time<td><td>execution time of last request</td></tr>");
                 writer
                         .print("<tr><td>remote<td><td>the remote host and port</td></tr>");
                 writer.print("<tr><td>method<td><td>the http method</td></tr>");
                 writer
                         .print("<tr><td>uri<td><td>short uri of last request</td></tr>");
-                writer.print("<tr><td>LST<td><td>time at the last start (Last Start Time)</td></tr>");
+                writer
+                        .print("<tr><td>LST<td><td>time at the last start (Last Start Time)</td></tr>");
                 writer
                         .print("<tr><td>TSLS<td><td>time since last start</td></tr>");
                 writer
@@ -240,8 +244,9 @@ public class StatusController implements Controller, ServletContextAware {
 
         protected String format(final RequestInfo info) {
             final StringBuilder b = new StringBuilder();
-            b.append("<tr class=\"requestinfo "
-                    + (info.isRunning() ? "running" : "notrunning") + "\">");
+            State s = info.getThreadState();
+            b.append("<tr class=\"requestinfo"
+                    + (info.isRunning() ? "" : " notrunning") + "\">");
             b.append("<td class=\"threadname\">");
             b.append(info.getThreadName());
             b.append("</td><td class=\"counter\">");
@@ -259,10 +264,11 @@ public class StatusController implements Controller, ServletContextAware {
             b.append("</td><td class=\"LST\">");
             b.append(df.format(new Date(info.getLastStartTime())));
             b.append("</td><td class=\"TSLS\">");
-            b.append(tf.format(System.currentTimeMillis()
+            b.append(tf.formatMilli(System.currentTimeMillis()
                     - info.getLastStartTime()));
             b.append("</td><td class=\"threadstate\">");
-            b.append(info.getThreadState());
+            
+            b.append(s);
             b.append("</td></tr>");
 
             return b.toString();
