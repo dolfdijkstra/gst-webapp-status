@@ -170,6 +170,8 @@ public class StatusController implements Controller, ServletContextAware {
             writer.println("tr.requestinfo {white-space: nowrap}");
             //writer.println("tr.running {color: black}");
             writer.println("tr.notrunning {color: #CCCCCC}");
+            writer.println("td.blocked {color: red}");
+            writer.println("td.runnable {color: green}");
             //writer.println("-->");
             writer.println("</style>");
             writer.println("</head><body>");
@@ -243,16 +245,17 @@ public class StatusController implements Controller, ServletContextAware {
         }
 
         protected String format(final RequestInfo info) {
-            final StringBuilder b = new StringBuilder();
+            final StringBuilder b = new StringBuilder(500);
             State s = info.getThreadState();
-            b.append("<tr class=\"requestinfo"
-                    + (info.isRunning() ? "" : " notrunning") + "\">");
+            boolean r = info.isRunning();
+            b.append("<tr class=\"requestinfo" + (r ? "" : " notrunning")
+                    + "\">");
             b.append("<td class=\"threadname\">");
             b.append(info.getThreadName());
             b.append("</td><td class=\"counter\">");
             b.append(info.getCounter());
             b.append("</td><td class=\"running\">");
-            b.append(info.isRunning() ? "R" : ".");
+            b.append(r ? "R" : ".");
             b.append("</td><td class=\"RT\">");
             b.append(tf.format(info.getExecutionTimeForLastRequest()));
             b.append("</td><td class=\"remote_host\">");
@@ -260,14 +263,18 @@ public class StatusController implements Controller, ServletContextAware {
             b.append("</td><td class=\"method\">");
             b.append(info.getMethod());
             b.append("</td><td class=\"uri\">");
-            b.append(info.getCurrentUri());
+            String uri = info.getCurrentUri();
+            b.append(uri.length() > 125 ? uri.substring(0, 125) : uri);
+
             b.append("</td><td class=\"LST\">");
             b.append(df.format(new Date(info.getLastStartTime())));
             b.append("</td><td class=\"TSLS\">");
             b.append(tf.formatMilli(System.currentTimeMillis()
                     - info.getLastStartTime()));
-            b.append("</td><td class=\"threadstate\">");
-            
+            b.append("</td><td class=\"threadstate"
+                    + (s == State.BLOCKED ? " blocked"
+                            : s == State.RUNNABLE ? " runnable" : "") + "\">");
+
             b.append(s);
             b.append("</td></tr>");
 
