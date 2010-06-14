@@ -65,8 +65,6 @@ public class RequestInfo {
 
     protected String createUri(final HttpServletRequest request) {
         final StringBuilder b = new StringBuilder(150);
-        //b.append(request.getMethod());
-        //b.append(' ');
         b.append(request.getRequestURI());
         final String q = request.getQueryString();
         if (q != null) {
@@ -78,6 +76,7 @@ public class RequestInfo {
     protected void start(HttpServletRequest request) {
         if (running.get())
             return;
+        running.set(true);
         counter.incrementAndGet();
         this.lastStartTime = System.currentTimeMillis();
         this.lastNanoStartTime = System.nanoTime();
@@ -85,15 +84,15 @@ public class RequestInfo {
         this.remoteHost = request.getRemoteHost() + ":"
                 + request.getRemotePort();
         this.method = request.getMethod();
-        running.set(true);
+        
     }
 
     protected void end(HttpServletRequest request) {
         if (!running.get())
             return;
         this.lastExecutionTime = System.nanoTime() - lastNanoStartTime;
-        running.set(false);
         this.lastEndTime =System.currentTimeMillis();
+        running.set(false);
     }
 
     /**
