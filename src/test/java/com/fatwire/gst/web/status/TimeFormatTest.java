@@ -54,7 +54,14 @@ public class TimeFormatTest extends TestCase {
         TimeFormat tf = new TimeFormat();
 
         String x = tf.format(30 * 1000L);
-        assertEquals("030us",x);
+        assertEquals("00030us",x);
+    }
+    public void testMicroSeconds_100() {
+        TimeFormat tf = new TimeFormat();
+
+        String x = tf.format(1030 * 1000L);
+        assertEquals("01030us",x);
     }
 
+    
 }

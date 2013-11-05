@@ -15,9 +15,12 @@
  */
 package com.fatwire.gst.web.status;
 
+import java.util.concurrent.TimeUnit;
+
 public class TimeFormat {
     static final long MILLI = 1000000L;
 
+    static final long HUNDRED_MILLI = 1000000L * 10;
     static final long SECOND = 1000L * MILLI;
 
     static final long MINUTE = 60 * TimeFormat.SECOND;
@@ -46,9 +49,9 @@ public class TimeFormat {
             pad3(b, rms);
             b.append("ms");
             return b.toString();
-        } else if (t < TimeFormat.MILLI) {
+        } else if (t < TimeFormat.HUNDRED_MILLI) {
             final StringBuilder b = new StringBuilder();
-            pad3(b, (int) (t / 1000));
+            pad5(b, (int) (t / 1000));
             b.append("us");
             return b.toString();
         } else {
@@ -56,7 +59,6 @@ public class TimeFormat {
             pad3(b, ms);
             b.append("ms");
             return b.toString();
-
         }
     }
 
@@ -92,6 +94,20 @@ public class TimeFormat {
             return b.toString();
 
         }
+    }
+
+    private void pad5(final StringBuilder b, final long v) {
+        if (v < 10) {
+            b.append("0000");
+        } else if (v < 100) {
+            b.append("000");
+        } else if (v < 1000) {
+            b.append("00");
+        } else if (v < 10000) {
+            b.append("0");
+        }
+        b.append(v);
+
     }
 
     private void pad3(final StringBuilder b, final long v) {
