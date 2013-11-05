@@ -90,9 +90,12 @@ public class StatusServlet extends HttpServlet {
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
+        String n = getServletContext().getContextPath();
+        if (n == null || n.length() == 0) {
+            n = "/";
+        }
 
-        RequestCounter requestCounter = (RequestCounter) ConcurrencyCounterLocator.getInstance().locate(
-                config.getServletContext().getServletContextName());
+        RequestCounter requestCounter = (RequestCounter) ConcurrencyCounterLocator.getInstance().locate(n);
 
         if (requestCounter == null)
             throw new ServletException("requestCounter is not registered. Is the "

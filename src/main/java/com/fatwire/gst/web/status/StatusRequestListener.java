@@ -30,7 +30,8 @@ import org.apache.commons.logging.LogFactory;
 import com.fatwire.gst.web.status.jmx.StatusCounter;
 
 /**
- * ServletRequestListener that signals the {@link RequestCounter} when requests start and end. Registers the {@link StatusCounter} as a JMX MBean.
+ * ServletRequestListener that signals the {@link RequestCounter} when requests
+ * start and end. Registers the {@link StatusCounter} as a JMX MBean.
  * 
  * @author Dolf.Dijkstra
  * @since Jun 10, 2010
@@ -75,17 +76,20 @@ public class StatusRequestListener implements ServletRequestListener, ServletCon
     }
 
     public void contextInitialized(ServletContextEvent sce) {
-        requestCounter = new RequestCounter(sce.getServletContext().getServletContextName());
+        String n = sce.getServletContext().getContextPath();
+        if (n == null || n.length() == 0) {
+            n = "/";
+        }
+
+        requestCounter = new RequestCounter(n);
         ConcurrencyCounterLocator.getInstance().register(requestCounter);
 
         try {
-            name = new ObjectName("com.fatwire.gst.web:type=RequestCounter,name="
-                    + sce.getServletContext().getServletContextName());
+            name = new ObjectName("com.fatwire.gst.web:type=RequestCounter,name=" + ObjectName.quote(n));
             ManagementFactory.getPlatformMBeanServer().registerMBean(new StatusCounter(requestCounter), name);
         } catch (Throwable e) {
             log.warn(e.getMessage(), e);
         }
 
     }
-
 }
