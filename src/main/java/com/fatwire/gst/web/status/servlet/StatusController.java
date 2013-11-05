@@ -101,10 +101,7 @@ public class StatusController {
 
         }
 
-        public String getContentType() {
-            return "text/plain";
-        }
-
+     
     }
 
     class HtmlView implements View {
@@ -146,42 +143,36 @@ public class StatusController {
             return "";
         }
 
-        /* (non-Javadoc)
-         * @see org.springframework.web.servlet.View#getContentType()
-         */
-        public String getContentType() {
-            return "text/html; charset=\"UTF-8\"";
-        }
-
+      
         /* (non-Javadoc)
          * @see org.springframework.web.servlet.View#render(java.util.Map, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
          */
         public void render(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
-            // final long t = System.nanoTime();
             response.setContentType("text/html; charset=\"UTF-8\"");
             final PrintWriter writer = response.getWriter();
-            writer.println("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">");
+            writer.println("<!DOCTYPE html>");
             writer.println("<html><head><title>Status for " + getServletContext().getServerInfo() + " at "
-                    + request.getLocalName() + "</title>");
+                    + request.getLocalName() + getServletContext().getContextPath() + "</title>");
             writer.println("<style type=\"text/css\">");
-            // writer.println("<!--");
             writer.println("td,th,body { font-size: small; font-family: monospace; }");
             writer.println("tr.requestinfo {white-space: nowrap}");
-            // writer.println("tr.running {color: black}");
             writer.println("tr.notrunning {color: #CCCCCC}");
             writer.println("td.blocked {color: red}");
             writer.println("td.runnable {color: green}");
-            // writer.println("-->");
+            writer.println("td.TSLS, td.counter,td.RT {text-align:right}");
             writer.println("</style>");
             writer.println("</head><body>");
             writer.print("<h1>Status for " + getServletContext().getServerInfo() + " at " + request.getLocalName()
-                    + "</h1>");
+                    + getServletContext().getContextPath() + "</h1>");
             writer.print("<div class=\"summary\">total:" + requestCounter.getTotalCount());
             writer.print("<br/>");
             writer.print("concurrent:" + requestCounter.getConcurrencyCount());
+            writer.print("<br/>");
+            writer.print("peak:" + requestCounter.getPeakConcurrencyCount());
+
             writer.print("</div>");
             final Collection<RequestInfo> c = requestCounter.getCurrentExecutingOperations();
-            // writer.print("<p>" + (System.nanoTime() - t) / 1000 + "us </p>");
+
             if (requestInfo) {
                 writer.print("<table><tr><th>");
                 writer.print("thread");
@@ -225,8 +216,6 @@ public class StatusController {
 
                 writer.println("</table>");
             }
-
-            // writer.print("<p>" + (System.nanoTime() - t) / 1000 + "us </p>");
             writer.print("</body></html>");
             writer.flush();
         }
@@ -243,19 +232,23 @@ public class StatusController {
             b.append("</td><td class=\"running\">");
             b.append(r ? "R" : ".");
             b.append("</td><td class=\"RT\">");
-            b.append(tf.format(info.getExecutionTimeForLastRequest()));
+            if (!r)
+                b.append(tf.format(info.getExecutionTimeForLastRequest()));
             b.append("</td><td class=\"remote_host\">");
             b.append(info.getRemoteHost());
             b.append("</td><td class=\"method\">");
             b.append(info.getMethod());
             b.append("</td><td class=\"uri\">");
             String uri = info.getCurrentUri();
-            b.append(uri.length() > 125 ? uri.substring(0, 125) : uri);
+            b.append(uri.length() > 125 ? uri.substring(0, 122) + "..." : uri);
 
             b.append("</td><td class=\"LST\">");
-            b.append(df.format(new Date(info.getLastStartTime())));
+            if (!r)
+                b.append(df.format(new Date(info.getLastStartTime())));
             b.append("</td><td class=\"TSLS\">");
-            b.append(tf.formatMilli(System.currentTimeMillis() - info.getLastStartTime()));
+            if (r)
+                //b.append(tf.formatMilli(System.currentTimeMillis() - info.getLastStartTime()));
+                b.append(tf.format(info.getExecutionTimeForLastRequest()));
             b.append("</td><td class=\"threadstate"
                     + (s == State.BLOCKED ? " blocked" : s == State.RUNNABLE ? " runnable" : "") + "\">");
 
