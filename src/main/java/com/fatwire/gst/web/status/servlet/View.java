@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Dolf Dijkstra. All Rights Reserved.
+ * Copyright 2013 Dolf Dijkstra. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.fatwire.gst.web.status;
 
-import java.util.Collection;
+package com.fatwire.gst.web.status.servlet;
 
-public interface ConcurrencyCounter<T,E> {
+import java.io.IOException;
 
-    void start(T t);
-    
-    long end(T t);
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-    long getTotalCount();
-    
-    int getConcurrencyCount();
-    
-    Collection<E> getCurrentExecutingOperations();
-    
-    String getName();
-    
-    void reset();
+public interface View {
+
+    public void render(final HttpServletRequest request, final HttpServletResponse response) throws IOException;
+
 }

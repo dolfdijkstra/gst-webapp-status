@@ -1,3 +1,19 @@
+~~
+~~ Copyright 2006 Dolf Dijkstra. All Rights Reserved.
+~~
+~~ Licensed under the Apache License, Version 2.0 (the "License");
+~~ you may not use this file except in compliance with the License.
+~~ You may obtain a copy of the License at
+~~
+~~    http://www.apache.org/licenses/LICENSE-2.0
+~~
+~~ Unless required by applicable law or agreed to in writing, software
+~~ distributed under the License is distributed on an "AS IS" BASIS,
+~~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+~~ See the License for the specific language governing permissions and
+~~ limitations under the License.
+~~
+
 Status Tool
 
   The tool provides information on the current executing requests. It is similar to Apache httpd's mod_status.
@@ -47,7 +63,7 @@ Usage
 
 * JMX
 
-  The JMX view is limited, it only lists the current number of exeuting requests and the total number of handled requests.
+  The JMX view is limited, it only lists the current number of executing requests and the total number of handled requests.
   
   Use a tool like JConsole to view the JMX Beans. 
 
@@ -55,38 +71,12 @@ Usage
   
   
 Deployment
-
-
-  To deploy the tool on top of ContentServer you need to add spring-webmvc-2.5.5.jar and spring-context-2.5.5 to WEB-INF/lib.
   
-  You also need to deploy the jar from this project. This jar can be downloaded from {{{http://www.nl.fatwire.com/maven2/com/fatwire/gst/gst-webapp-status}here}}.
+  You need to deploy the jar from this project to WEB-INF/lib. This jar can be downloaded from {{{https://github.com/dolfdijkstra/mvn-repository/tree/master/releases}github}}.
   
   Next you need to make some changes to web.xml. 
   
 ----------
-<context-param>
-      <param-name>contextConfigLocation</param-name>
-      <param-value>/WEB-INF/applicationContext.xml,classpath:com/fatwire/gst/web/status/applicationContext-status.xml</param-value>
-</context-param>
-
-<filter>
-	<filter-name>RequestCounterFilter</filter-name>
-	<filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
-	<init-param>
-		<param-name>targetBeanName</param-name>
-		<param-value>requestCounterFilter</param-value>
-	</init-param>
-</filter>
-
-<filter-mapping>
-	<filter-name>RequestCounterFilter</filter-name>
-	<url-pattern>/*</url-pattern>
-	<dispatcher>REQUEST</dispatcher>
-</filter-mapping>
-
-<!-- The  StatusRequestListener must be placed AFTER the org.springframework.web.context.ContextLoaderListener. 
-     This listener enables the JMX support. 
--->
 
 <listener>
         <listener-class>com.fatwire.gst.web.status.StatusRequestListener</listener-class>
@@ -94,12 +84,8 @@ Deployment
 
 <servlet>
 	<servlet-name>status</servlet-name>
-	<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+	<servlet-class>com.fatwire.gst.web.status.servlet.StatusServlet</servlet-class>
 	<load-on-startup>1</load-on-startup>
-	<init-param>
-	<param-name>contextConfigLocation</param-name>
-	<param-value>classpath:com/fatwire/gst/web/status/status-servlet.xml</param-value>
-	</init-param>
 </servlet>
 
 <servlet-mapping>

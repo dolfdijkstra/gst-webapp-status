@@ -1,3 +1,18 @@
+/*
+ * Copyright 2006 Dolf Dijkstra. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.fatwire.gst.web.status;
 
 import java.lang.management.ManagementFactory;
@@ -14,15 +29,14 @@ import org.apache.commons.logging.LogFactory;
 
 import com.fatwire.gst.web.status.jmx.StatusCounter;
 
-
 /**
- * Implements JMX enablement of the StatusCounter.
+ * ServletRequestListener that signals the {@link RequestCounter} when requests start and end. Registers the {@link StatusCounter} as a JMX MBean.
+ * 
  * @author Dolf.Dijkstra
  * @since Jun 10, 2010
  */
 
-public class StatusRequestListener implements ServletRequestListener,
-        ServletContextListener {
+public class StatusRequestListener implements ServletRequestListener, ServletContextListener {
 
     private Log log = LogFactory.getLog(StatusRequestListener.class);
 
@@ -32,29 +46,22 @@ public class StatusRequestListener implements ServletRequestListener,
 
     public void requestDestroyed(ServletRequestEvent event) {
         if (event.getServletRequest() instanceof HttpServletRequest)
-            requestCounter.end((HttpServletRequest) event.getServletRequest());
+            try {
+                requestCounter.end((HttpServletRequest) event.getServletRequest());
+            } catch (Throwable e) {
+                log.warn(e.getMessage(), e);
+            }
 
     }
 
     public void requestInitialized(ServletRequestEvent event) {
         if (event.getServletRequest() instanceof HttpServletRequest)
-            requestCounter
-                    .start((HttpServletRequest) event.getServletRequest());
+            try {
+                requestCounter.start((HttpServletRequest) event.getServletRequest());
+            } catch (Throwable e) {
+                log.warn(e.getMessage(), e);
+            }
 
-    }
-
-    /**
-     * @return the requestCounter
-     */
-    public RequestCounter getRequestCounter() {
-        return requestCounter;
-    }
-
-    /**
-     * @param requestCounter the requestCounter to set
-     */
-    public void setRequestCounter(RequestCounter requestCounter) {
-        this.requestCounter = requestCounter;
     }
 
     public void contextDestroyed(ServletContextEvent sce) {
@@ -62,21 +69,21 @@ public class StatusRequestListener implements ServletRequestListener,
         try {
             ManagementFactory.getPlatformMBeanServer().unregisterMBean(name);
         } catch (Throwable e) {
-            log.error(e.getMessage(), e);
+            log.info(e.getMessage(), e);
         }
 
     }
 
     public void contextInitialized(ServletContextEvent sce) {
-        requestCounter = new RequestCounter(sce.getServletContext()
-                .getServletContextName());
+        requestCounter = new RequestCounter(sce.getServletContext().getServletContextName());
+        ConcurrencyCounterLocator.getInstance().register(requestCounter);
 
         try {
-            name = new ObjectName("com.fatwire.gst.web:type=RequestCounter");
-            ManagementFactory.getPlatformMBeanServer().registerMBean(
-                    new StatusCounter(requestCounter), name);
+            name = new ObjectName("com.fatwire.gst.web:type=RequestCounter,name="
+                    + sce.getServletContext().getServletContextName());
+            ManagementFactory.getPlatformMBeanServer().registerMBean(new StatusCounter(requestCounter), name);
         } catch (Throwable e) {
-            log.error(e.getMessage(), e);
+            log.warn(e.getMessage(), e);
         }
 
     }
