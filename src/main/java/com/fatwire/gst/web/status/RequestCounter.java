@@ -17,7 +17,6 @@ package com.fatwire.gst.web.status;
 
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.WeakHashMap;
@@ -31,8 +30,9 @@ public class RequestCounter implements ConcurrencyCounter<HttpServletRequest, Re
     private final AtomicLong counter = new AtomicLong();
 
     private final AtomicInteger concurrencyCounter = new AtomicInteger();
+    private final AtomicInteger peakConcurrencyCounter = new AtomicInteger();
 
-    private final Map<Thread, RequestInfo> threadMap = new WeakHashMap<Thread, RequestInfo>();
+    private final WeakHashMap<Thread, RequestInfo> threadMap = new WeakHashMap<Thread, RequestInfo>();
 
     private final String name;
 
@@ -43,7 +43,7 @@ public class RequestCounter implements ConcurrencyCounter<HttpServletRequest, Re
          */
         @Override
         protected RequestInfo initialValue() {
-            RequestInfo i = new RequestInfo(Thread.currentThread());
+            final RequestInfo i = new RequestInfo(Thread.currentThread());
             synchronized (threadMap) {
                 threadMap.put(Thread.currentThread(), i);
             }
@@ -54,7 +54,8 @@ public class RequestCounter implements ConcurrencyCounter<HttpServletRequest, Re
 
     private final Comparator<RequestInfo> requestInfoComparator = new Comparator<RequestInfo>() {
 
-        public int compare(RequestInfo o1, RequestInfo o2) {
+        @Override
+        public int compare(final RequestInfo o1, final RequestInfo o2) {
             return o1.getThreadName().compareTo(o2.getThreadName());
         }
 
@@ -64,22 +65,30 @@ public class RequestCounter implements ConcurrencyCounter<HttpServletRequest, Re
         this.name = name;
     }
 
+    @Override
     public long getTotalCount() {
         return counter.get();
     }
 
+    @Override
     public int getConcurrencyCount() {
         return concurrencyCounter.get();
     }
 
+    public int getPeakConcurrencyCount() {
+        return peakConcurrencyCounter.get();
+    }
+
+    @Override
     public Collection<RequestInfo> getCurrentExecutingOperations() {
         final Set<RequestInfo> s = new TreeSet<RequestInfo>(requestInfoComparator);
         RequestInfo[] r;
         synchronized (threadMap) {
             r = threadMap.values().toArray(new RequestInfo[threadMap.size()]);
         }
-        for (RequestInfo info : r) {
-            if (info.isAlive()) {// filter out inactive threads
+        for (final RequestInfo info : r) {
+            if ((info != null) && info.isAlive()) {// filter out inactive
+                                                   // threads
                 s.add(info);
             }
         }
@@ -87,24 +96,34 @@ public class RequestCounter implements ConcurrencyCounter<HttpServletRequest, Re
 
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public synchronized void reset() {
         counter.set(0);
         concurrencyCounter.set(0);
+        peakConcurrencyCounter.set(0);
         for (final RequestInfo info : threadMap.values()) {
             info.reset();
         }
     }
 
+    @Override
     public void start(final HttpServletRequest request) {
         final RequestInfo current = threadLocal.get();
-        if (current.isRunning())
+        if (current.isRunning()) {
             throw new IllegalStateException("Can't call start twice");
+        }
         current.start(request);
-        concurrencyCounter.incrementAndGet();
+        final int c = concurrencyCounter.incrementAndGet();
+        int max = peakConcurrencyCounter.get();
+
+        while ((c > max) && !peakConcurrencyCounter.compareAndSet(max, c)) {
+            max = peakConcurrencyCounter.get();
+        }
         counter.incrementAndGet();
 
     }
@@ -112,8 +131,9 @@ public class RequestCounter implements ConcurrencyCounter<HttpServletRequest, Re
     /**
      * signal end of the request
      * 
-     * @return the execution time for this requets in nano seconds
+     * @return the execution time for this requests in nano seconds
      */
+    @Override
     public long end(final HttpServletRequest request) {
         final RequestInfo current = threadLocal.get();
         if (current.isRunning()) {
