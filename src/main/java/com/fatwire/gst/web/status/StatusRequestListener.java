@@ -1,11 +1,11 @@
 /*
- * Copyright 2006 Dolf Dijkstra. All Rights Reserved.
+ * Copyright (C) 2006 Dolf Dijkstra
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *         http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,8 +30,8 @@ import org.apache.commons.logging.LogFactory;
 import com.fatwire.gst.web.status.jmx.StatusCounter;
 
 /**
- * ServletRequestListener that signals the {@link RequestCounter} when requests
- * start and end. Registers the {@link StatusCounter} as a JMX MBean.
+ * ServletRequestListener that signals the {@link RequestCounter} when requests start and end. Registers the
+ * {@link StatusCounter} as a JMX MBean.
  * 
  * @author Dolf.Dijkstra
  * @since Jun 10, 2010
@@ -66,6 +66,7 @@ public class StatusRequestListener implements ServletRequestListener, ServletCon
     }
 
     public void contextDestroyed(ServletContextEvent sce) {
+        ConcurrencyCounterLocator.getInstance().deregister(requestCounter);
         requestCounter = null;
         try {
             ManagementFactory.getPlatformMBeanServer().unregisterMBean(name);
@@ -82,8 +83,10 @@ public class StatusRequestListener implements ServletRequestListener, ServletCon
         }
 
         requestCounter = new RequestCounter(n);
-        ConcurrencyCounterLocator.getInstance().register(requestCounter);
-
+        ConcurrencyCounter<?, ?> old = ConcurrencyCounterLocator.getInstance().register(requestCounter);
+        if (old != null) {
+            requestCounter = (RequestCounter) old;
+        }
         try {
             name = new ObjectName("com.fatwire.gst.web:type=RequestCounter,name=" + ObjectName.quote(n));
             ManagementFactory.getPlatformMBeanServer().registerMBean(new StatusCounter(requestCounter), name);

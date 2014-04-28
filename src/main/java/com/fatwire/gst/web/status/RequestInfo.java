@@ -1,11 +1,11 @@
 /*
- * Copyright 2006 Dolf Dijkstra. All Rights Reserved.
+ * Copyright (C) 2006 Dolf Dijkstra
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *         http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,9 +24,10 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * 
- * Object that holds state on the current executed request. 
+ * Object that holds state on the current executed request.
  * 
- * This object is thread safe, under the restriction that all WRITES are done from the same thread.
+ * This object is thread safe, under the restriction that all WRITES are done
+ * from the same thread.
  * 
  * 
  * @author Dolf Dijkstra
@@ -47,8 +48,6 @@ public class RequestInfo {
     private volatile long lastEndTime;
 
     private volatile long lastNanoStartTime;
-
-    //private volatile long lastNanoEndTime;
 
     private volatile long lastExecutionTime;
 
@@ -96,17 +95,16 @@ public class RequestInfo {
         this.lastStartTime = System.currentTimeMillis();
         this.lastNanoStartTime = System.nanoTime();
         this.currentUri = createUri(request);
-        this.remoteHost = request.getRemoteHost() + ":"
-                + request.getRemotePort();
+        this.remoteHost = request.getRemoteHost() + ":" + request.getRemotePort();
         this.method = request.getMethod();
-        
+
     }
 
     protected void end(HttpServletRequest request) {
         if (!running.get())
             return;
         this.lastExecutionTime = System.nanoTime() - lastNanoStartTime;
-        this.lastEndTime =System.currentTimeMillis();
+        this.lastEndTime = System.currentTimeMillis();
         running.set(false);
     }
 

@@ -1,11 +1,11 @@
 /*
- * Copyright 2006 Dolf Dijkstra. All Rights Reserved.
+ * Copyright (C) 2006 Dolf Dijkstra
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *         http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,22 +36,7 @@ public class RequestCounter implements ConcurrencyCounter<HttpServletRequest, Re
 
     private final String name;
 
-    private final ThreadLocal<RequestInfo> threadLocal = new ThreadLocal<RequestInfo>() {
-
-        /* (non-Javadoc)
-         * @see java.lang.ThreadLocal#initialValue()
-         */
-        @Override
-        protected RequestInfo initialValue() {
-            final RequestInfo i = new RequestInfo(Thread.currentThread());
-            synchronized (threadMap) {
-                threadMap.put(Thread.currentThread(), i);
-            }
-            return i;
-        }
-
-    };
-
+    private final ThreadLocal<RequestInfo> threadLocal = new ThreadLocal<RequestInfo>();
     private final Comparator<RequestInfo> requestInfoComparator = new Comparator<RequestInfo>() {
 
         @Override
@@ -111,9 +96,13 @@ public class RequestCounter implements ConcurrencyCounter<HttpServletRequest, Re
         }
     }
 
+    public synchronized void clear() {
+        this.threadMap.clear();
+    }
+
     @Override
     public void start(final HttpServletRequest request) {
-        final RequestInfo current = threadLocal.get();
+        final RequestInfo current = getCurrent();
         if (current.isRunning()) {
             throw new IllegalStateException("Can't call start twice");
         }
@@ -125,6 +114,20 @@ public class RequestCounter implements ConcurrencyCounter<HttpServletRequest, Re
             max = peakConcurrencyCounter.get();
         }
         counter.incrementAndGet();
+
+    }
+
+    private RequestInfo getCurrent() {
+        RequestInfo i = threadLocal.get();
+        if (i == null) {
+            i = new RequestInfo(Thread.currentThread());
+
+            synchronized (threadMap) {
+                threadMap.put(Thread.currentThread(), i);
+            }
+            threadLocal.set(i);
+        }
+        return i;
 
     }
 

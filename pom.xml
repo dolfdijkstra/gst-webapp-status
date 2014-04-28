@@ -91,30 +91,23 @@
 			</plugin>
 			<plugin>
 				<inherited>true</inherited>
-				<groupId>com.mycila.maven-license-plugin</groupId>
-				<artifactId>maven-license-plugin</artifactId>
-				<version>1.10.b1</version>
-				<dependencies>
-					<dependency>
-						<groupId>com.fatwire.gst</groupId>
-						<artifactId>gsf-build-tools</artifactId>
-						<version>11.6.0</version>
-					</dependency>
-				</dependencies>
+				<groupId>com.mycila</groupId>
+				<artifactId>license-maven-plugin</artifactId>
+				<version>2.6</version>
 				<configuration>
-					<header>com/fatwire/gst/foundation/license/APACHE2-HEADER.txt
-					</header>
+					<header>APACHE-2.txt</header>
+					<!-- 
 					<validHeaders>
 						<validHeader>com/fatwire/gst/foundation/license/LicenseHeader.txt
 						</validHeader>
 					</validHeaders>
+					 -->
 					<failIfMissing>true</failIfMissing>
 					<strictCheck>false</strictCheck>
 					<skipExistingHeaders>true</skipExistingHeaders>
 					<aggregate>false</aggregate>
 					<properties>
-						<year>${project.inceptionYear}</year>
-						<company>${project.organization.name}</company>
+						<owner>Dolf Dijkstra</owner>
 					</properties>
 					<includes>
 						<include>src/**</include>
@@ -144,7 +137,6 @@
 					</execution>
 				</executions>
 			</plugin>
-
 		</plugins>
 	</build>
 	<reporting>

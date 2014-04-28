@@ -1,11 +1,11 @@
 /*
- * Copyright 2013 Dolf Dijkstra. All Rights Reserved.
+ * Copyright (C) 2006 Dolf Dijkstra
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *         http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -118,31 +118,6 @@ public class StatusController {
             super();
             this.requestInfo = requestInfo;
         }
-
-        String buildMemReport() {
-            final Thread[] list = new Thread[Thread.currentThread().getThreadGroup().activeGroupCount()];
-            Thread.currentThread().getThreadGroup().enumerate(list);
-            for (final Thread th : list) {
-                th.getState();
-            }
-            ManagementFactory.getRuntimeMXBean().getUptime();
-            final ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
-            final MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-            final List<MemoryPoolMXBean> memPoolBeans = ManagementFactory.getMemoryPoolMXBeans();
-            threadBean.getPeakThreadCount();
-            threadBean.getThreadCount();
-            threadBean.getTotalStartedThreadCount();
-            memBean.getHeapMemoryUsage();
-            memBean.getNonHeapMemoryUsage();
-            memBean.getObjectPendingFinalizationCount();
-            for (final MemoryPoolMXBean memPoolBean : memPoolBeans) {
-                memPoolBean.getName();
-                memPoolBean.getPeakUsage();
-                memPoolBean.getCollectionUsage().toString();
-            }
-            return "";
-        }
-
       
         /* (non-Javadoc)
          * @see org.springframework.web.servlet.View#render(java.util.Map, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
@@ -266,7 +241,6 @@ public class StatusController {
             try {
                 final int i = Integer.parseInt(request.getParameter("refresh"));
                 if (i > 0) {
-
                     response.setHeader("refresh", Integer.toString(i));
                 }
             } catch (final Throwable e) {
